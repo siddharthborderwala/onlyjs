@@ -5,7 +5,6 @@ import { ToggleSwitch } from './components/toggle-switch'
 export const App = () => {
   const theme = useThemeValue()
   const toggleTheme = useToggleTheme()
-
   useThemeSync()
 
   return (

@@ -2,6 +2,18 @@ import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
 import { Play, X } from '@phosphor-icons/react'
+// import { format } from 'prettier/standalone'
+// import prettierBabelPlugin from 'prettier/plugins/babel'
+// // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// // @ts-ignore
+// import prettierEstreePlugin from 'prettier/plugins/estree'
+// format(code, {
+//   parser: 'babel',
+//   plugins: [prettierBabelPlugin, prettierEstreePlugin]
+// }).then((formatted) => {
+//   setCode(formatted)
+// })
+
 import { useThemeValue } from '../atoms/settings'
 import { useCode } from '../atoms/code'
 import {
@@ -25,67 +37,95 @@ const getLogClasses = (type: ConsoleEntryType) => {
   }
 }
 
+const renderValue = (value: any, i: number) => {
+  if (typeof value === 'object' && value !== null) {
+    if (Array.isArray(value)) {
+      return (
+        <span key={i}>
+          <span className="text-gray-400 dark:text-gray-500">[</span>
+          {value.map((v, i) => (
+            <span key={i}>
+              {renderValue(v, i)}
+              {i !== value.length - 1 && (
+                <em className="text-gray-400 dark:text-gray-500">,</em>
+              )}
+            </span>
+          ))}
+          <span className="text-gray-400 dark:text-gray-500">]</span>
+        </span>
+      )
+    }
+    return (
+      <span key={i}>
+        <span className="text-gray-400 dark:text-gray-500 mr-1">{'{'}</span>
+        {Object.entries(value).map(([key, value], i, self) => (
+          <span key={i}>
+            <em>{key}:</em> {renderValue(value, i)}
+            {i !== self.length - 1 && (
+              <em className="text-gray-400 dark:text-gray-500">, </em>
+            )}
+          </span>
+        ))}
+        <span className="text-gray-400 dark:text-gray-500 ml-1">{'}'}</span>
+      </span>
+    )
+  }
+  if (typeof value === 'string') {
+    return (
+      <span key={i} className="text-green-500">
+        &apos;{value}&apos;
+      </span>
+    )
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return (
+      <span key={i} className="text-indigo-500">
+        {value.toString()}
+      </span>
+    )
+  }
+  if (typeof value === 'bigint') {
+    return (
+      <span key={i} className="text-amber-500">
+        {value.toString()}n
+      </span>
+    )
+  }
+  if (typeof value === 'symbol') {
+    return (
+      <span key={i} className="text-teal-500 dark:text-teal-400">
+        {value.toString()}
+      </span>
+    )
+  }
+  if (typeof value === 'function') {
+    return (
+      <span key={i}>
+        <em className="text-gray-400 dark:text-gray-500">f </em>
+        {value.toString()}
+      </span>
+    )
+  }
+  if (value === undefined) {
+    return <strong key={i}>undefined</strong>
+  }
+  if (value === null) {
+    return <strong key={i}>null</strong>
+  }
+}
+
 const ConsoleEntryView = ({ log }: { log: ConsoleEntry }) => {
+  if (log.values.length === 0) {
+    return null
+  }
+
   return (
     <div
-      className={`px-2 py-1 border-b border-b-gray-300 dark:border-b-gray-700 font-mono text-xs ${getLogClasses(
+      className={`px-2 py-1 space-x-2 border-b border-b-gray-300 dark:border-b-gray-700 font-mono text-xs ${getLogClasses(
         log.type
       )}`}
     >
-      {log.values.map((value, i) => {
-        if (typeof value === 'object' && value !== null) {
-          return (
-            <pre key={`${i}_${log.timestamp}`}>
-              {JSON.stringify(value, null, 2)}
-            </pre>
-          )
-        }
-        if (typeof value === 'string') {
-          return (
-            <span key={`${i}_${log.timestamp}`} className="text-green-600">
-              {value}
-            </span>
-          )
-        }
-        if (typeof value === 'number' || typeof value === 'boolean') {
-          return (
-            <span key={`${i}_${log.timestamp}`} className="text-indigo-500">
-              {value.toString()}
-            </span>
-          )
-        }
-        if (typeof value === 'bigint') {
-          return (
-            <span key={`${i}_${log.timestamp}`} className="text-amber-500">
-              {value.toString()}n
-            </span>
-          )
-        }
-        if (typeof value === 'symbol') {
-          return (
-            <span
-              key={`${i}_${log.timestamp}`}
-              className="text-teal-500 dark:text-teal-400"
-            >
-              {value.toString()}
-            </span>
-          )
-        }
-        if (typeof value === 'function') {
-          return (
-            <span key={`${i}_${log.timestamp}`}>
-              <em className="text-gray-400 dark:text-gray-500">f </em>
-              {value.toString()}
-            </span>
-          )
-        }
-        if (value === undefined) {
-          return <strong key={`${i}_${log.timestamp}`}>undefined</strong>
-        }
-        if (value === null) {
-          return <strong key={`${i}_${log.timestamp}`}>null</strong>
-        }
-      })}
+      {log.values.map(renderValue)}
     </div>
   )
 }
@@ -150,13 +190,13 @@ export const Editor = () => {
     <div className="flex w-full h-full">
       <CodeMirror
         height="calc(100vh - 64px)"
-        className="flex-[3] border border-gray-300 dark:border-gray-700"
+        className="flex-[3] overflow-x-auto border border-gray-300 dark:border-gray-700"
         extensions={[javascript({ jsx: true })]}
         theme={theme === 'dark' ? githubDark : githubLight}
         value={code}
         onChange={setCode}
       />
-      <div className="flex-[2] h-full">
+      <div className="flex-[2] flex-shrink-0 h-full">
         <div className="bg-gray-50 dark:bg-[#202124] h-full">
           <div className="flex dark:bg-[#292A2D] justify-between items-center py-2 px-2 border-y border-gray-300 dark:border-gray-700">
             <p className="text-sm text-gray-900 dark:text-gray-50 font-mono">
