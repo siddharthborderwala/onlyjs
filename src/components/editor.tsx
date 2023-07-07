@@ -1,7 +1,15 @@
 import CodeMirror from '@uiw/react-codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
+import Split from '@uiw/react-split'
+import classNames from 'classnames'
+import { useThemeValue } from '../atoms/settings'
+import { useCode } from '../atoms/code'
+import { ConsoleEntryType, useWriteToConsole } from '../atoms/console'
+import { useCallback } from 'react'
+import { ConsoleView } from './console-view'
 import { Play, X } from '@phosphor-icons/react'
+
 // import { format } from 'prettier/standalone'
 // import prettierBabelPlugin from 'prettier/plugins/babel'
 // // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -13,12 +21,6 @@ import { Play, X } from '@phosphor-icons/react'
 // }).then((formatted) => {
 //   setCode(formatted)
 // })
-
-import { useThemeValue } from '../atoms/settings'
-import { useCode } from '../atoms/code'
-import { ConsoleEntryType, useWriteToConsole } from '../atoms/console'
-import { useCallback } from 'react'
-import { ConsoleView } from './console-view'
 
 export const Editor = () => {
   const theme = useThemeValue()
@@ -66,39 +68,62 @@ export const Editor = () => {
   )
 
   return (
-    <div className="flex w-full h-full">
+    <Split
+      className="border-b border-b-gray-300 dark:border-gray-700"
+      style={{
+        height: 'calc(100vh - 2.84rem)'
+      }}
+      mode="horizontal"
+      renderBar={({ onMouseDown, className, ...props }) => {
+        return (
+          <div
+            {...props}
+            className={classNames(
+              className,
+              '!bg-transparent !shadow-none !w-[5px]'
+            )}
+          >
+            <div
+              onMouseDown={onMouseDown}
+              className=" bg-gray-200/20 w-full dark:bg-gray-700/20 backdrop-blur-3xl !shadow-none group/dragger"
+            >
+              <div className="w-[1px] translate-x-[2px] h-full transition-colors dark:bg-blue-200/20 group-hover/dragger:dark:bg-blue-700/30" />
+            </div>
+          </div>
+        )
+      }}
+    >
       <CodeMirror
-        height="calc(100vh - 64px)"
-        className="flex-[3] overflow-x-auto border border-gray-300 dark:border-gray-700"
+        id="editor-container"
+        height="100%"
+        className="w-3/5 overflow-x-auto overflow-y-auto"
         extensions={[javascript({ jsx: true })]}
         theme={theme === 'dark' ? githubDark : githubLight}
         value={code}
         onChange={setCode}
       />
-      <div className="flex-[2] flex-shrink-0 h-full">
-        <div className="bg-gray-50 dark:bg-[#202124] h-full">
-          <div className="flex dark:bg-[#292A2D] justify-between items-center py-2 px-2 border-y border-gray-300 dark:border-gray-700">
-            <p className="text-sm text-gray-900 dark:text-gray-50 font-mono">
-              Console
-            </p>
-            <div>
-              <button
-                className="py-1 px-2 border border-gray-200 dark:border-gray-700 rounded-bl-lg rounded-tl-lg outline-none hover:bg-gray-200 hover:dark:bg-gray-700 focus-visible:ring-1 text-gray-700 dark:text-gray-300"
-                onClick={clearConsole}
-              >
-                <X size={16} weight="bold" />
-              </button>
-              <button
-                className="-ml-[1px] py-1 px-2 border border-gray-200 dark:border-gray-700 rounded-br-lg rounded-tr-lg outline-none hover:bg-gray-200 hover:dark:bg-gray-700 focus-visible:ring-1 text-gray-700 dark:text-gray-300"
-                onClick={() => handleExec(code)}
-              >
-                <Play size={16} weight="bold" />
-              </button>
-            </div>
+      <div className="w-2/5" id="console-container">
+        <div className="py-1 px-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#292A2D] flex items-center justify-between">
+          <p className="font-mono text-sm text-gray-700 dark:text-gray-50">
+            main.js
+          </p>
+          <div>
+            <button
+              className="py-1 px-2 border border-gray-200 dark:border-gray-700 rounded-bl-lg rounded-tl-lg outline-none hover:bg-gray-200 hover:dark:bg-gray-700 focus-visible:ring-1 text-gray-700 dark:text-gray-300"
+              onClick={clearConsole}
+            >
+              <X size={16} weight="bold" />
+            </button>
+            <button
+              className="-ml-[1px] py-1 px-2 border border-gray-200 dark:border-gray-700 rounded-br-lg rounded-tr-lg outline-none hover:bg-gray-200 hover:dark:bg-gray-700 focus-visible:ring-1 text-gray-700 dark:text-gray-300"
+              onClick={() => handleExec(code)}
+            >
+              <Play size={16} weight="bold" />
+            </button>
           </div>
-          <ConsoleView />
         </div>
+        <ConsoleView />
       </div>
-    </div>
+    </Split>
   )
 }
