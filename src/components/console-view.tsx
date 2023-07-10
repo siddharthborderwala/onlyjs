@@ -3,7 +3,7 @@ import {
   ConsoleEntryType,
   useReadConsole
 } from '../atoms/console'
-import { memo, useEffect, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 
 const getLogClasses = (type: ConsoleEntryType) => {
   switch (type) {
@@ -18,35 +18,141 @@ const getLogClasses = (type: ConsoleEntryType) => {
   }
 }
 
-const renderValue = (value: any, i: number, entryType: ConsoleEntryType) => {
-  if (typeof value === 'object' && value !== null) {
-    if (Array.isArray(value)) {
-      return (
+type PromiseStateType =
+  | {
+      state: 'pending'
+      result: undefined
+      error: undefined
+    }
+  | {
+      state: 'resolved'
+      result: any
+      error: undefined
+    }
+  | {
+      state: 'rejected'
+      result: undefined
+      error: Error
+    }
+
+const RenderPromise = ({ promise }: { promise: Promise<any> }) => {
+  const [promiseState, setPromiseState] = useState<PromiseStateType>({
+    state: 'pending',
+    result: undefined,
+    error: undefined
+  })
+
+  useEffect(() => {
+    promise
+      .then((result) => {
+        setPromiseState({
+          state: 'resolved',
+          result,
+          error: undefined
+        })
+      })
+      .catch((error: Error) => {
+        setPromiseState({
+          state: 'rejected',
+          result: undefined,
+          error
+        })
+      })
+  }, [promise])
+
+  return (
+    <div>
+      <span className="text-gray-400 dark:text-gray-500 mr-2">Promise</span>
+      <span className="text-gray-400 dark:text-gray-500 mr-1">{'{'}</span>
+      <br />
+      <div className="ml-4">
+        <span>
+          <em className="text-gray-400 dark:text-gray-500 mr-1">state:</em>
+          {promiseState.state},
+        </span>
+        <br />
+        {promiseState.state === 'resolved' ? (
+          <span>
+            <em className="text-gray-400 dark:text-gray-500 mr-1">result:</em>
+            {renderValue(promiseState.result, 0, ConsoleEntryType.log)}
+          </span>
+        ) : null}
+        {promiseState.state === 'rejected' ? (
+          <span>
+            <em className="text-gray-400 dark:text-gray-500 mr-1">error:</em>
+            {renderValue(promiseState.error, 0, ConsoleEntryType.error)}
+          </span>
+        ) : null}
+      </div>
+      <span className="text-gray-400 dark:text-gray-500 mr-1">{'}'}</span>
+    </div>
+  )
+}
+
+const renderArray = (
+  value: Array<any>,
+  i: number,
+  entryType: ConsoleEntryType
+) => {
+  return (
+    <span key={i}>
+      <span className="text-gray-400 dark:text-gray-500">[</span>
+      {value.map((v, i) => (
         <span key={i}>
-          <span className="text-gray-400 dark:text-gray-500">[</span>
-          {value.map((v, i) => (
-            <span key={i}>
-              {renderValue(v, i, entryType)}
-              {i !== value.length - 1 && (
-                <em className="text-gray-400 dark:text-gray-500">, </em>
-              )}
-            </span>
-          ))}
-          <span className="text-gray-400 dark:text-gray-500">]</span>
+          {renderValue(v, i, entryType)}
+          {i !== value.length - 1 && (
+            <em className="text-gray-400 dark:text-gray-500 mr-1">,</em>
+          )}
+        </span>
+      ))}
+      <span className="text-gray-400 dark:text-gray-500">]</span>
+    </span>
+  )
+}
+
+const renderValue = (
+  value: any,
+  i: number,
+  entryType: ConsoleEntryType
+): JSX.Element => {
+  if (typeof value === 'object' && value !== null) {
+    const objName = value.constructor.name
+    if (objName === 'Array') {
+      return renderArray(value, i, entryType)
+    }
+    if (objName === 'Promise') {
+      return <RenderPromise promise={value} />
+    }
+    if (objName.includes('Error')) {
+      return (
+        <span className="text-red-500 dark:text-red-400">
+          {renderValue(value.toString(), i, ConsoleEntryType.error)}
         </span>
       )
     }
+    const entries = Object.entries(value)
     return (
       <span key={i}>
+        {objName === 'Object' ? null : (
+          <em className="text-gray-400 dark:text-gray-500 mr-2">{objName}</em>
+        )}
         <span className="text-gray-400 dark:text-gray-500 mr-1">{'{'}</span>
-        {Object.entries(value).map(([key, value], i, self) => (
-          <span key={i}>
-            <em>{key}:</em> {renderValue(value, i, entryType)}
-            {i !== self.length - 1 && (
-              <em className="text-gray-400 dark:text-gray-500">, </em>
-            )}
-          </span>
-        ))}
+        {entries.length > 1 ? (
+          <>
+            <br />
+            <div className="ml-4">
+              {entries.map(([key, value], i, self) => (
+                <span key={i}>
+                  <em>{key}:</em> {renderValue(value, i, entryType)}
+                  {i !== self.length - 1 && (
+                    <em className="text-gray-400 dark:text-gray-500">,</em>
+                  )}
+                  <br />
+                </span>
+              ))}
+            </div>
+          </>
+        ) : null}
         <span className="text-gray-400 dark:text-gray-500 ml-1">{'}'}</span>
       </span>
     )
@@ -98,7 +204,7 @@ const renderValue = (value: any, i: number, entryType: ConsoleEntryType) => {
   if (typeof value === 'function') {
     return (
       <span key={i}>
-        <em className="text-gray-400 dark:text-gray-500">f </em>
+        <em className="text-gray-400 dark:text-gray-500 mr-1">f</em>
         {value.toString()}
       </span>
     )
@@ -109,6 +215,7 @@ const renderValue = (value: any, i: number, entryType: ConsoleEntryType) => {
   if (value === null) {
     return <strong key={i}>null</strong>
   }
+  return <strong key={i}>unknown</strong>
 }
 
 const ConsoleEntryView = ({ log }: { log: ConsoleEntry }) => {

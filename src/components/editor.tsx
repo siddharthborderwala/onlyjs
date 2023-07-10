@@ -69,10 +69,7 @@ export const Editor = () => {
 
   return (
     <Split
-      className="border-b border-b-gray-300 dark:border-gray-700"
-      style={{
-        height: 'calc(100vh - 2.84rem)'
-      }}
+      className="border-b border-b-gray-300 dark:border-gray-700 h-full"
       mode="horizontal"
       renderBar={({ onMouseDown, className, ...props }) => {
         return (
@@ -80,7 +77,7 @@ export const Editor = () => {
             {...props}
             className={classNames(
               className,
-              '!bg-transparent !shadow-none !w-[5px]'
+              '!bg-transparent !shadow-none !w-[6px]'
             )}
           >
             <div
@@ -104,7 +101,7 @@ export const Editor = () => {
       />
       <div className="w-2/5" id="console-container">
         <div className="py-1 px-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#292A2D] flex items-center justify-between">
-          <p className="font-mono text-sm text-gray-700 dark:text-gray-50">
+          <p className="font-mono text-xs text-gray-700 dark:text-gray-50">
             main.js
           </p>
           <div>
