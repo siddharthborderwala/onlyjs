@@ -1,7 +1,0 @@
-.cm-content {
-  @apply font-mono text-sm;
-}
-
-.cm-focused {
-  @apply !outline-none;
-}

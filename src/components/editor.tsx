@@ -1,6 +1,4 @@
-import CodeMirror from '@uiw/react-codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { githubDark, githubLight } from '@uiw/codemirror-theme-github'
+import MonacoEditor from '@monaco-editor/react'
 import Split from '@uiw/react-split'
 import classNames from 'classnames'
 import { useThemeValue } from '../atoms/settings'
@@ -9,18 +7,7 @@ import { ConsoleEntryType, useWriteToConsole } from '../atoms/console'
 import { useCallback } from 'react'
 import { ConsoleView } from './console-view'
 import { Play, X } from '@phosphor-icons/react'
-
-// import { format } from 'prettier/standalone'
-// import prettierBabelPlugin from 'prettier/plugins/babel'
-// // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// // @ts-ignore
-// import prettierEstreePlugin from 'prettier/plugins/estree'
-// format(code, {
-//   parser: 'babel',
-//   plugins: [prettierBabelPlugin, prettierEstreePlugin]
-// }).then((formatted) => {
-//   setCode(formatted)
-// })
+import { Loader } from './loader'
 
 export const Editor = () => {
   const theme = useThemeValue()
@@ -82,22 +69,37 @@ export const Editor = () => {
           >
             <div
               onMouseDown={onMouseDown}
-              className=" bg-gray-200/20 w-full dark:bg-gray-700/20 backdrop-blur-3xl !shadow-none group/dragger"
+              className="bg-gray-200/20 !w-[6px] dark:bg-gray-700/20 backdrop-blur-3xl !shadow-none group/dragger"
             >
-              <div className="w-[1px] translate-x-[2px] h-full transition-colors dark:bg-blue-200/20 group-hover/dragger:dark:bg-blue-700/30" />
+              <div
+                onMouseDown={onMouseDown}
+                className="w-[1px] translate-x-[2.5px] h-full transition-colors bg-gray-300 group-hover/dragger:bg-blue-500/30 dark:bg-gray-700 group-hover/dragger:dark:bg-blue-700/30"
+              />
             </div>
           </div>
         )
       }}
     >
-      <CodeMirror
-        id="editor-container"
+      <MonacoEditor
+        loading={
+          <div className="flex flex-col gap-2 items-center justify-center">
+            <Loader theme={theme} />
+            <p className="text-gray-700 dark:text-gray-300">Loading Editor</p>
+          </div>
+        }
         height="100%"
-        className="w-3/5 overflow-x-auto overflow-y-auto"
-        extensions={[javascript({ jsx: true })]}
-        theme={theme === 'dark' ? githubDark : githubLight}
+        language="javascript"
+        className="w-3/5 overflow-x-auto overflow-y-auto font-mono"
+        theme={theme === 'dark' ? 'vs-dark' : 'light'}
+        options={{
+          fontSize: 14,
+          fontFamily: 'monospace',
+          fontLigatures: true
+        }}
         value={code}
-        onChange={setCode}
+        onChange={(value) => {
+          setCode(value ?? '')
+        }}
       />
       <div className="w-2/5" id="console-container">
         <div className="py-1 px-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#292A2D] flex items-center justify-between">
