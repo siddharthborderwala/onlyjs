@@ -1,10 +1,22 @@
 import { useAtomValue, useSetAtom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { useCallback, useEffect } from 'react'
+import { EditorTheme, ThemeType, themes } from '../themes'
 
-export type Theme = 'light' | 'dark'
+export const editorThemeAtom = atomWithStorage<EditorTheme>(
+  'editor-theme',
+  EditorTheme['vs-dark']
+)
 
-export const themeAtom = atomWithStorage<Theme>('color-theme', 'dark')
+export const useEditorThemeValue = () => {
+  return useAtomValue(editorThemeAtom)
+}
+
+export const useSetEditorTheme = () => {
+  return useSetAtom(editorThemeAtom)
+}
+
+export const themeAtom = atomWithStorage<ThemeType>('color-theme', 'dark')
 
 export const useThemeValue = () => {
   return useAtomValue(themeAtom)
@@ -16,6 +28,8 @@ export const useSetTheme = () => {
 
 export const useThemeSync = () => {
   const theme = useThemeValue()
+  const editorTheme = useEditorThemeValue()
+  const setEditorTheme = useSetEditorTheme()
 
   useEffect(() => {
     const html = document.documentElement
@@ -34,13 +48,21 @@ export const useThemeSync = () => {
       html.classList.add(theme)
     }
   }, [theme])
+
+  useEffect(() => {
+    if (themes[editorTheme].type === 'dark' && theme === 'light') {
+      setEditorTheme(EditorTheme['light'])
+    } else if (themes[editorTheme].type === 'light' && theme === 'dark') {
+      setEditorTheme(EditorTheme['vs-dark'])
+    }
+  }, [editorTheme, theme, setEditorTheme])
 }
 
 export const useToggleTheme = () => {
   const setTheme = useSetTheme()
 
   const toggleTheme = useCallback(() => {
-    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'))
+    setTheme((prevTheme) => prevTheme === 'light' ? 'dark' : 'light')
   }, [setTheme])
 
   return toggleTheme

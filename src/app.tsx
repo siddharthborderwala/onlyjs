@@ -1,11 +1,25 @@
 import { Lightning } from '@phosphor-icons/react'
-import { useThemeSync, useThemeValue, useToggleTheme } from './atoms/settings'
+import {
+  useEditorThemeValue,
+  useSetEditorTheme,
+  useThemeSync,
+  useThemeValue,
+  useToggleTheme
+} from './atoms/settings'
 import { Editor } from './components/editor'
 import { ToggleSwitch } from './components/toggle-switch'
+import { EditorTheme, ThemeType, themes } from './themes'
+
+const themeEntries = Object.entries(themes) as [EditorTheme, {
+  name: string
+  type: ThemeType
+}][]
 
 export const App = () => {
   const theme = useThemeValue()
   const toggleTheme = useToggleTheme()
+  const editorTheme = useEditorThemeValue()
+  const setEditorTheme = useSetEditorTheme()
 
   useThemeSync()
 
@@ -24,7 +38,17 @@ export const App = () => {
                 onlyjs.io
               </p>
             </div>
-            <div>
+            <div className='flex items-center gap-4'>
+              <select value={editorTheme} onChange={(e) => setEditorTheme(e.target.value as keyof typeof themes)}>
+                {themeEntries.filter(([, value]) => value.type === theme).map(([key, value]) => (
+                  <option
+                    key={key}
+                    value={key}
+                  >
+                    {value.name}
+                  </option>
+                ))}
+              </select>
               <ToggleSwitch
                 checked={theme === 'dark'}
                 label="Dark Mode"

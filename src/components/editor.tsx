@@ -1,17 +1,19 @@
-import MonacoEditor from '@monaco-editor/react'
+import MonacoEditor, { useMonaco } from '@monaco-editor/react'
 import Split from '@uiw/react-split'
 import classNames from 'classnames'
-import { useThemeValue } from '../atoms/settings'
+import { useEditorThemeValue, useThemeValue } from '../atoms/settings'
 import { useCode } from '../atoms/code'
 import { ConsoleEntryType, useWriteToConsole } from '../atoms/console'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { ConsoleView } from './console-view'
 import { Play, X } from '@phosphor-icons/react'
 import { Loader } from './loader'
+import { generateThemeConfig, getThemeType } from '../themes'
 
 export const Editor = () => {
   const theme = useThemeValue()
   const [code, setCode] = useCode('main')
+  const editorTheme = useEditorThemeValue()
   // do not remove as it is used in eval
   const [writeToConsole, clearConsole] = useWriteToConsole()
 
@@ -54,6 +56,21 @@ export const Editor = () => {
     [writeToConsole]
   )
 
+  const monaco = useMonaco()
+
+  useEffect(() => {
+    if (!monaco || editorTheme === 'vs-dark' || editorTheme === 'light') {
+      return
+    }
+    import(`../themes/${editorTheme}.json`).then(({ default: theme }) => {
+      monaco.editor.defineTheme(editorTheme, generateThemeConfig(
+        theme,
+        getThemeType(editorTheme)
+      ))
+      monaco.editor.setTheme(editorTheme)
+    })
+  }, [monaco, editorTheme])
+
   return (
     <Split
       className="border-b border-b-gray-300 dark:border-gray-700 h-full"
@@ -90,11 +107,14 @@ export const Editor = () => {
         height="100%"
         language="javascript"
         className="w-3/5 overflow-x-auto overflow-y-auto font-mono"
-        theme={theme === 'dark' ? 'vs-dark' : 'light'}
+        theme={editorTheme}
         options={{
           fontSize: 14,
           fontFamily: 'monospace',
-          fontLigatures: true
+          fontLigatures: true,
+          minimap: {
+            enabled: false
+          }
         }}
         value={code}
         onChange={(value) => {
