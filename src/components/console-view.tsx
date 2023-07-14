@@ -123,6 +123,14 @@ const renderValue = (
     if (objName === 'Promise') {
       return <RenderPromise promise={value} />
     }
+    if (objName === 'Date') {
+      return (
+        <span>
+          <em className="text-gray-400 dark:text-gray-500 mr-2">{objName}</em>
+          <span>{value.toISOString()}</span>
+        </span>
+      )
+    }
     if (objName.includes('Error')) {
       return (
         <span className="text-red-500 dark:text-red-400">
