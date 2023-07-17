@@ -235,7 +235,7 @@ const ConsoleEntryView = ({ log }: { log: ConsoleEntry }) => {
     <div
       className={`px-2 py-1 space-x-2 border-b border-b-gray-300 dark:border-b-gray-700 font-mono text-xs ${getLogClasses(
         log.type
-      )} break-all`}
+      )} break-words`}
     >
       {log.values.map((l, i) => renderValue(l, i, log.type))}
     </div>

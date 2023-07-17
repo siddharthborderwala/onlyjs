@@ -29,6 +29,17 @@ export const Editor = () => {
           'writeToConsole',
           'clearConsole',
           `
+          // security reset
+          const blockedProperties = ['referrer', 'cookie', 'domain', 'location', 'opener']
+          const document = new Proxy(window.document, {
+            get: (obj, prop) => {
+              if (blockedProperties.includes(prop)) {
+                return 'cannot access ' + obj.constructor.name + '.' + prop + ' for security reasons'
+              }
+              return obj[prop]
+            }
+          })
+
           const console = {
             log: (...args) => {
               writeToConsole('log', ...args)
@@ -50,7 +61,7 @@ export const Editor = () => {
             ${code}
           } catch (e) {
             if (e instanceof Error) {
-              writeToConsole('error', e.stack)
+              writeToConsole('error', e.toString())
             }
           }
         `
@@ -58,7 +69,7 @@ export const Editor = () => {
         fn(writeToConsole, clearConsole)
       } catch (e) {
         if (e instanceof Error) {
-          writeToConsole(ConsoleEntryType.error, `${e.stack}`)
+          writeToConsole(ConsoleEntryType.error, e.toString())
         }
       }
     },
