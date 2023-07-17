@@ -20,32 +20,37 @@ export const Editor = () => {
   const handleExec = useCallback(
     (code: string) => {
       try {
-        eval(`
-        const console = {
-          log: (...args) => {
-            writeToConsole('log', ...args)
-          },
-          error: (...args) => {
-            writeToConsole('error', ...args)
-          },
-          warn: (...args) => {
-            writeToConsole('warn', ...args)
-          },
-          clear: clearConsole,
-          assert: (condition, ...args) => {
-            if (!condition) {
+        const fn = new Function(
+          'writeToConsole',
+          'clearConsole',
+          `
+          const console = {
+            log: (...args) => {
+              writeToConsole('log', ...args)
+            },
+            error: (...args) => {
               writeToConsole('error', ...args)
+            },
+            warn: (...args) => {
+              writeToConsole('warn', ...args)
+            },
+            clear: clearConsole,
+            assert: (condition, ...args) => {
+              if (!condition) {
+                writeToConsole('error', ...args)
+              }
             }
           }
-        }
-        try {
-          ${code}
-        } catch (e) {
-          if (e instanceof Error) {
-            writeToConsole('error', e.stack)
+          try {
+            ${code}
+          } catch (e) {
+            if (e instanceof Error) {
+              writeToConsole('error', e.stack)
+            }
           }
-        }
-      `)
+        `
+        )
+        fn(writeToConsole, clearConsole)
       } catch (e) {
         if (e instanceof Error) {
           writeToConsole(ConsoleEntryType.error, `${e.stack}`)
@@ -63,10 +68,10 @@ export const Editor = () => {
       return
     }
     import(`../themes/${editorTheme}.json`).then(({ default: theme }) => {
-      monaco.editor.defineTheme(editorTheme, generateThemeConfig(
-        theme,
-        getThemeType(editorTheme)
-      ))
+      monaco.editor.defineTheme(
+        editorTheme,
+        generateThemeConfig(theme, getThemeType(editorTheme))
+      )
       monaco.editor.setTheme(editorTheme)
     })
   }, [monaco, editorTheme])
@@ -121,7 +126,7 @@ export const Editor = () => {
           setCode(value ?? '')
         }}
       />
-      <div className="w-2/5" id="console-container">
+      <div className="w-2/5 overflow-x-auto" id="console-container">
         <div className="py-1 px-2 border-b border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-[#292A2D] flex items-center justify-between">
           <p className="font-mono text-xs text-gray-700 dark:text-gray-50">
             main.js

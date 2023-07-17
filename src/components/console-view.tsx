@@ -18,7 +18,7 @@ const getLogClasses = (type: ConsoleEntryType) => {
   }
 }
 
-type PromiseStateType =
+type PromiseStateType<T> =
   | {
       state: 'pending'
       result: undefined
@@ -26,7 +26,7 @@ type PromiseStateType =
     }
   | {
       state: 'resolved'
-      result: any
+      result: T
       error: undefined
     }
   | {
@@ -35,8 +35,8 @@ type PromiseStateType =
       error: Error
     }
 
-const RenderPromise = ({ promise }: { promise: Promise<any> }) => {
-  const [promiseState, setPromiseState] = useState<PromiseStateType>({
+const RenderPromise = <T,>({ promise }: { promise: Promise<T> }) => {
+  const [promiseState, setPromiseState] = useState<PromiseStateType<T>>({
     state: 'pending',
     result: undefined,
     error: undefined
@@ -235,7 +235,7 @@ const ConsoleEntryView = ({ log }: { log: ConsoleEntry }) => {
     <div
       className={`px-2 py-1 space-x-2 border-b border-b-gray-300 dark:border-b-gray-700 font-mono text-xs ${getLogClasses(
         log.type
-      )}`}
+      )} break-all`}
     >
       {log.values.map((l, i) => renderValue(l, i, log.type))}
     </div>
