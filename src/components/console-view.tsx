@@ -249,10 +249,10 @@ export const ConsoleView = () => {
   const ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (ref.current) {
+    if (ref.current && consoleEntries.length > 0) {
       ref.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [consoleEntries])
+  }, [consoleEntries.length])
 
   return (
     <div
