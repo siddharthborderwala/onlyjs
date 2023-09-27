@@ -9,8 +9,17 @@ import { ConsoleEntryType, useWriteToConsole } from '../atoms/console'
 import { ConsoleView } from './console-view'
 import { Loader } from './loader'
 import { generateThemeConfig, getThemeType } from '../themes'
+import type { editor } from 'monaco-editor'
 
-export const Editor = () => {
+export type EditorKeyBinding = {
+  commandId: string
+  commandCallback: () => void
+  keybinding: editor.IKeybindingRule['keybinding']
+}
+
+export const Editor: React.FC<{
+  keyBindings?: EditorKeyBinding[]
+}> = (props) => {
   const theme = useThemeValue()
   const [code, setCode] = useCode('main')
   const editorTheme = useEditorThemeValue()
@@ -78,6 +87,22 @@ export const Editor = () => {
   )
 
   const monaco = useMonaco()
+
+  useEffect(() => {
+    if (!monaco || !props.keyBindings) {
+      return
+    }
+    props.keyBindings.forEach((keyBinding) => {
+      monaco.editor.addCommand({
+        id: keyBinding.commandId,
+        run: keyBinding.commandCallback
+      })
+      monaco.editor.addKeybindingRule({
+        keybinding: keyBinding.keybinding,
+        command: keyBinding.commandId
+      })
+    })
+  }, [monaco, props.keyBindings])
 
   useEffect(() => {
     if (!monaco || editorTheme === 'vs-dark' || editorTheme === 'light') {
